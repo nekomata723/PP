@@ -220,7 +220,7 @@ class PayPay():
             if par["header"]["resultCode"] != "S0000":
                 raise PayPayLoginError(par)
             
-            # WebView部分でcurl_cffiを使用（Chrome 131のTLSフィンガープリントを模倣）
+            # WebView部分でcurl_cffiを使用（Chrome 132のTLSフィンガープリントを模倣）
             headers = {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -230,7 +230,7 @@ class PayPay():
                 "Host": "www.paypay.ne.jp",
                 "is-emulator": "false",
                 "Pragma": "no-cache",
-                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="131", "Android WebView";v="131"',
+                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132"',
                 "sec-ch-ua-mobile": "?1",
                 "sec-ch-ua-platform": '"Android"',
                 "Sec-Fetch-Dest": "document",
@@ -238,7 +238,7 @@ class PayPay():
                 "Sec-Fetch-Site": "none",
                 "Sec-Fetch-User": "?1",
                 "Upgrade-Insecure-Requests": "1",
-                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
+                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
                 "X-Requested-With": "jp.ne.paypay.android.app"
             }
             params = {
@@ -249,13 +249,13 @@ class PayPay():
             # 人間らしい遅延を追加
             time.sleep(random.uniform(0.5, 1.2))
             
-            # curl_cffiでChrome 131を模倣してリクエスト
+            # curl_cffiでChrome 132を模倣してリクエスト
             self.webview_session.get(
                 f"https://www.paypay.ne.jp/portal/api/v2/oauth2/authorize",
                 headers=headers,
                 params=params,
                 proxies=self.proxy,
-                impersonate="chrome131"
+                impersonate="chrome132"
             )
             
             time.sleep(random.uniform(0.3, 0.8))
@@ -269,7 +269,7 @@ class PayPay():
                 headers=headers,
                 params=params,
                 proxies=self.proxy,
-                impersonate="chrome131"
+                impersonate="chrome132"
             )
             
             time.sleep(random.uniform(0.4, 0.9))
@@ -285,13 +285,13 @@ class PayPay():
                 "Host": "www.paypay.ne.jp",
                 "Pragma": "no-cache",
                 "Referer": "https://www.paypay.ne.jp/portal/oauth2/sign-in?client_id=pay2-mobile-app-client&mode=landing",
-                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="131", "Android WebView";v="131")',
+                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132")',
                 "sec-ch-ua-mobile": "?1",
                 "sec-ch-ua-platform": '"Android"',
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-origin",
-                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
+                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
                 "X-Requested-With": "jp.ne.paypay.android.app"
             }
             
@@ -299,7 +299,7 @@ class PayPay():
                 "https://www.paypay.ne.jp/portal/api/v2/oauth2/par/check",
                 headers=headers,
                 proxies=self.proxy,
-                impersonate="chrome131"
+                impersonate="chrome132"
             ).json()
             
             if par_check["header"]["resultCode"] != "S0000":
@@ -323,13 +323,13 @@ class PayPay():
                 "Origin": "https://www.paypay.ne.jp",
                 "Pragma": "no-cache",
                 "Referer": "https://www.paypay.ne.jp/portal/oauth2/sign-in?client_id=pay2-mobile-app-client&mode=landing",
-                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="131", "Android WebView";v="131")',
+                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132")',
                 "sec-ch-ua-mobile": "?1",
                 "sec-ch-ua-platform": '"Android"',
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-origin",
-                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
+                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
                 "X-Requested-With": "jp.ne.paypay.android.app"
             }
             payload={
@@ -343,7 +343,7 @@ class PayPay():
                 headers=headers,
                 json=payload,
                 proxies=self.proxy,
-                impersonate="chrome131"
+                impersonate="chrome132"
             ).json()
             
             if signin["header"]["resultCode"] != "S0000":
@@ -381,7 +381,7 @@ class PayPay():
                     headers=headers,
                     json={},
                     proxies=self.proxy,
-                    impersonate="chrome131"
+                    impersonate="chrome132"
                 ).json()
                 
                 if code_update["header"]["resultCode"] != "S0000":
@@ -409,7 +409,7 @@ class PayPay():
                     headers=headers,
                     json=payload,
                     proxies=self.proxy,
-                    impersonate="chrome131"
+                    impersonate="chrome132"
                 ).json()
                 
                 if nav_2fa["header"]["resultCode"] != "S0000":
@@ -423,7 +423,7 @@ class PayPay():
                     headers=headers,
                     json={"waitUntil": "PT5S"},
                     proxies=self.proxy,
-                    impersonate="chrome131"
+                    impersonate="chrome132"
                 ).json()
                 
                 if otl_request["header"]["resultCode"] != "S0000":
@@ -451,13 +451,13 @@ class PayPay():
             "Origin": "https://www.paypay.ne.jp",
             "Pragma": "no-cache",
             "Referer": f"https://www.paypay.ne.jp/portal/oauth2/l?id={url}&client_id=pay2-mobile-app-client",
-            "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="131", "Android WebView";v="131"',
+            "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132"',
             "sec-ch-ua-mobile": "?1",
             "sec-ch-ua-platform": '"Android"',
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
+            "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
             "X-Requested-With": "jp.ne.paypay.android.app"
         }
         
@@ -466,7 +466,7 @@ class PayPay():
             headers=headers,
             json={"code":url},
             proxies=self.proxy,
-            impersonate="chrome131"
+            impersonate="chrome132"
         ).json()
         
         if confirm_url["header"]["resultCode"] != "S0000":
@@ -489,7 +489,7 @@ class PayPay():
             headers=headers,
             json=payload,
             proxies=self.proxy,
-            impersonate="chrome131"
+            impersonate="chrome132"
         ).json()
         
         if get_uri["header"]["resultCode"] != "S0000":
@@ -1187,4 +1187,5 @@ class PayPay():
         
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
