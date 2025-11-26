@@ -7,7 +7,7 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 
 authors = [
-    { name = "taka", email = "unknown" }
+    { name = "nekomata723", email = "jorey3ece90@l8l.chessgameland.com" }
 ]
 
 dependencies = [
