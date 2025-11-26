@@ -129,7 +129,8 @@ class PayPay():
         self.session=requests.Session()
         self.webview_session = tls_client.Session(
             client_identifier="chrome_132",
-            random_tls_extension_order=True
+            random_tls_extension_order=True,
+            proxies=proxy
         )
 
         if device_uuid:
@@ -1136,3 +1137,4 @@ class PayPay():
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
