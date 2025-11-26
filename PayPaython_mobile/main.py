@@ -166,7 +166,7 @@ class PayPay:
             "Client-OS-Type": "ANDROID",
             "Client-OS-Version": "29.0.0",
             "Device-UUID": self.device_uuid,
-            "Content-Type": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": f"PaypayApp/{self.version} Android10",
             "Connection": "Keep-Alive"
         }
@@ -980,6 +980,7 @@ class PayPay:
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
 
 
