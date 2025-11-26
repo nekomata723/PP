@@ -158,6 +158,7 @@ class PayPay:
 
         # 基本ヘッダー
         self.version = "5.11.1"
+        device_state = generate_device_state()
         self.headers = {
             "Accept": "*/*",
             "Accept-Charset": "UTF-8",
@@ -1033,6 +1034,7 @@ class PayPay:
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
 
 
