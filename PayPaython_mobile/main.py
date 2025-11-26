@@ -120,357 +120,198 @@ class PayPayNetWorkError(Exception):
     pass
 class AwsWafException(Exception):
     pass
-class PayPay():
-    def __init__(self,phone:str=None,password:str=None,device_uuid:str=None,client_uuid:str=str(uuid4()),access_token:str=None,proxy=None):
-        
+class PayPay:
+    def __init__(self, phone: str = None, password: str = None, device_uuid: str = None,
+                 client_uuid: str = str(uuid4()), access_token: str = None, proxy=None):
+
+        # 電話番号ハイフン除去
         if phone and "-" in phone:
-            phone=phone.replace("-","")
+            phone = phone.replace("-", "")
 
-        self.session=requests.Session()
-        self.webview_session = tls_client.Session(
-            client_identifier="chrome_132",
-            random_tls_extension_order=True
-        )
+        # セッション準備
+        self.session = requests.Session()
+        self.webview_session = tls_client.Session(client_identifier="chrome_132", random_tls_extension_order=True)
 
-        if device_uuid:
-            self.device_uuid=device_uuid
-        else:
-            self.device_uuid=str(uuid4())
-            
-        self.client_uuid=client_uuid
+        # デバイスUUID
+        self.device_uuid = device_uuid or str(uuid4())
+        self.client_uuid = client_uuid
 
+        # プロキシ設定
         if isinstance(proxy, str):
-            if not "http" in proxy:
+            if not proxy.startswith("http"):
                 proxy = "http://" + proxy
-            self.proxy={"https":proxy,"http":proxy}
-
+            self.proxy = {"https": proxy, "http": proxy}
         elif isinstance(proxy, dict):
-            self.proxy=proxy
-            
+            self.proxy = proxy
         else:
-            self.proxy=proxy
+            self.proxy = proxy
 
-        if self.proxy != None:
+        if self.proxy:
             self.webview_session.proxies.update(self.proxy)
 
+        # WAFトークン取得（必須）
         solver = Solver()
         self.waf_token = solver.get_token()
-
-        if self.waf_token == None:
+        if not self.waf_token:
             raise AwsWafException("Aws Waf Solve failed")
-        else:
-            self.webview_session.cookies.set(name="aws-waf-token", value=self.waf_token, domain="www.paypay.ne.jp")
+        self.webview_session.cookies.set("aws-waf-token", self.waf_token, domain="www.paypay.ne.jp")
 
-        self.params={
-            "payPayLang":"ja"
-        }
-        #try:
-        #    iosstore=self.session.get("https://apps.apple.com/jp/app/paypay-%E3%83%9A%E3%82%A4%E3%83%9A%E3%82%A4/id1435783608",proxies=self.proxy)
-        #except Exception as e:
-        #    raise NetWorkError(e)
-        
-        self.version="5.11.1" #BeautifulSoup(iosstore.text,"html.parser").find(class_="l-column small-6 medium-12 whats-new__latest__version").text.split()[1]
-        device_state = generate_device_state()
+        # 基本ヘッダー
+        self.version = "5.11.1"
         self.headers = {
             "Accept": "*/*",
-            "Accept-Charset": "UTF-8",
-            "Accept-Encoding": "gzip",
-            "Client-Mode": "NORMAL",
-            "Client-OS-Release-Version": "10",
+            "Client-Type": "PAYPAYAPP",
+            "Client-Version": self.version,
+            "Client-UUID": self.client_uuid,
             "Client-OS-Type": "ANDROID",
             "Client-OS-Version": "29.0.0",
-            "Client-Type": "PAYPAYAPP",
-            "Client-UUID": self.client_uuid,
-            "Client-Version": self.version,
-            "Connection": "Keep-Alive",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Device-Acceleration": device_state.device_acceleration,
-            "Device-Acceleration-2": device_state.device_acceleration_2,
-            "Device-Brand-Name": "KDDI",
-            "Device-Hardware-Name": "qcom",
-            "Device-In-Call": "false",
-            "Device-Lock-App-Setting": "false",
-            "Device-Lock-Type": "NONE",
-            "Device-Manufacturer-Name": "samsung",
-            "Device-Name": "SCV38",
-            "Device-Orientation": device_state.device_orientation,
-            "Device-Orientation-2": device_state.device_orientation_2,
-            "Device-Rotation": device_state.device_rotation,
-            "Device-Rotation-2": device_state.device_rotation_2,
             "Device-UUID": self.device_uuid,
-            "Host": "app4.paypay.ne.jp",
-            "Is-Emulator": "false",
-            "Network-Status": "WIFI",
-            "System-Locale": "ja",
-            "Timezone": "Asia/Tokyo",
-            "User-Agent": f"PaypayApp/{self.version} Android10"
+            "Content-Type": "application/json",
+            "User-Agent": f"PaypayApp/{self.version} Android10",
+            "Connection": "Keep-Alive"
         }
+
+        self.params = {"payPayLang": "ja"}
+
+        # アクセストークンありならセットして終了
         if access_token:
-            self.access_token=access_token
-            self.headers["Authorization"]=f"Bearer {self.access_token}"
-            self.headers["content-type"]="application/json"
-
+            self.access_token = access_token
+            self.headers["Authorization"] = f"Bearer {self.access_token}"
+        # phone/pwでログインする場合
         elif phone:
-            self.access_token=None
-            self.refresh_token=None
+            self.access_token = None
+            self.refresh_token = None
             self.code_verifier, self.code_challenge = pkce.generate_pkce_pair(43)
-            ##self.headers=update_header_baggage(self.headers,sentry_public_key,"0",False,"OAuth2Fragment",0)
 
+            # OAuth2 PARリクエスト
             payload = {
                 "clientId": "pay2-mobile-app-client",
                 "clientAppVersion": self.version,
-                "clientOsVersion": "29.0.0",
                 "clientOsType": "ANDROID",
+                "clientOsVersion": "29.0.0",
                 "redirectUri": "paypay://oauth2/callback",
                 "responseType": "code",
                 "state": pkce.generate_code_verifier(43),
                 "codeChallenge": self.code_challenge,
                 "codeChallengeMethod": "S256",
                 "scope": "REGULAR",
-                "tokenVersion": "v2",
-                "prompt": "",
-                "uiLocales": "ja"
+                "tokenVersion": "v2"
             }
-            par=self.session.post("https://app4.paypay.ne.jp/bff/v2/oauth2/par?payPayLang=ja",headers=self.headers,data=payload,proxies=self.proxy)
             try:
-                par=par.json()
+                par_resp = self.session.post("https://app4.paypay.ne.jp/bff/v2/oauth2/par?payPayLang=ja",
+                                             headers=self.headers, data=payload, proxies=self.proxy)
+                par = par_resp.json()
             except:
                 raise PayPayNetWorkError("日本以外からは接続できません")
-            
+
             if par["header"]["resultCode"] != "S0000":
                 raise PayPayLoginError(par)
-            
-            headers = {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Accept-Encoding": "gzip, deflate, br, zstd",
-                "Accept-Language": "ja-JP,ja;q=0.9",
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Host": "www.paypay.ne.jp",
-                "is-emulator": "false",
-                "Pragma": "no-cache",
-                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132"',
-                "sec-ch-ua-mobile": "?1",
-                "sec-ch-ua-platform": '"Android"',
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
-                "X-Requested-With": "jp.ne.paypay.android.app"
-            }
-            params = {
-                "client_id": "pay2-mobile-app-client",
-                "request_uri": par["payload"]["requestUri"]
-            }
-            self.webview_session.get(f"https://www.paypay.ne.jp/portal/api/v2/oauth2/authorize",headers=headers,params=params)
-            params = {
-                "client_id": "pay2-mobile-app-client",
-                "mode": "landing"
-            }
-            self.webview_session.get("https://www.paypay.ne.jp/portal/oauth2/sign-in",headers=headers,params=params)
-            
-            #sentry_ids = generate_sentry()
-            headers = {
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Encoding": "gzip, deflate, br, zstd",
-                "Accept-Language": "ja-JP,ja;q=0.9",
-                #"baggage": f"sentry-environment=Production,sentry-release=4.75.0,sentry-public_key=a5e3ae80a20e15b8de50274dd231ab83,sentry-trace_id={sentry_ids.trace_id},sentry-sample_rate=0.0005,sentry-transaction=SignIn,sentry-sampled=false",
-                "Cache-Control": "no-cache",
-                "Client-Id": "pay2-mobile-app-client",
-                "Client-Type": "PAYPAYAPP",
-                "Connection": "keep-alive",
-                "Host": "www.paypay.ne.jp",
-                "Pragma": "no-cache",
-                "Referer": "https://www.paypay.ne.jp/portal/oauth2/sign-in?client_id=pay2-mobile-app-client&mode=landing",
-                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132")',
-                "sec-ch-ua-mobile": "?1",
-                "sec-ch-ua-platform": '"Android"',
-                "Sec-Fetch-Dest": "empty",
-                "Sec-Fetch-Mode": "cors",
-                "Sec-Fetch-Site": "same-origin",
-                #"sentry-trace": sentry_ids.sentry_trace_0,
-                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
-                "X-Requested-With": "jp.ne.paypay.android.app"
-            }
-            par_check=self.session.get("https://www.paypay.ne.jp/portal/api/v2/oauth2/par/check",headers=headers,proxies=self.proxy).json()
-            if par_check["header"]["resultCode"] != "S0000":
-                raise PayPayLoginError(par_check)
-            
-            #sentry_ids = generate_sentry()
-            headers = {
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Encoding": "gzip, deflate, br, zstd",
-                "Accept-Language": "ja-JP,ja;q=0.9",
-                #"baggage": f"sentry-environment=Production,sentry-release=4.75.0,sentry-public_key=a5e3ae80a20e15b8de50274dd231ab83,sentry-trace_id={sentry_ids.trace_id}",
-                "Cache-Control": "no-cache",
-                "Client-Id": "pay2-mobile-app-client",
-                "Client-OS-Type": "ANDROID",
-                "Client-OS-Version": "29.0.0",
-                "Client-Type": "PAYPAYAPP",
-                "Client-Version": self.version,
-                "Connection": "keep-alive",
-                "Content-Type": "application/json",
-                "Host": "www.paypay.ne.jp",
-                "Origin": "https://www.paypay.ne.jp",
-                "Pragma": "no-cache",
-                "Referer": "https://www.paypay.ne.jp/portal/oauth2/sign-in?client_id=pay2-mobile-app-client&mode=landing",
-                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132")',
-                "sec-ch-ua-mobile": "?1",
-                "sec-ch-ua-platform": '"Android"',
-                "Sec-Fetch-Dest": "empty",
-                "Sec-Fetch-Mode": "cors",
-                "Sec-Fetch-Site": "same-origin",
-                #"sentry-trace": sentry_ids.sentry_trace,
-                "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
-                "X-Requested-With": "jp.ne.paypay.android.app"
-            }
-            payload={
-                "username":phone,
-                "password":password,
-                "signInAttemptCount":1
-            }
-            signin=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/sign-in/password",headers=headers,json=payload).json()
-            if signin["header"]["resultCode"] != "S0000":
-                raise PayPayLoginError(signin)
-            
-            if device_uuid:
-                try:
-                    uri=signin["payload"]["redirectUrl"].replace("paypay://oauth2/callback?","").split("&")
-                except:
-                    raise PayPayLoginError("登録されていないDevice-UUID")
-                
-                headers = self.headers
-                del headers["Device-Lock-Type"]
-                del headers["Device-Lock-App-Setting"]
-                #del headers["baggage"]
-                #del headers["sentry-trace"]
-                
-                
 
-                confirm_data={
-                    "clientId":"pay2-mobile-app-client",
-                    "redirectUri":"paypay://oauth2/callback",
-                    "code":uri[0].replace("code=",""),
-                    "codeVerifier":self.code_verifier
+            # sign-inページ取得
+            headers_web = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent": f"Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) wv Chrome/132.0.0.0 Mobile Safari/537.36",
+                "X-Requested-With": "jp.ne.paypay.android.app"
+            }
+            self.webview_session.get(
+                "https://www.paypay.ne.jp/portal/api/v2/oauth2/authorize",
+                headers=headers_web,
+                params={"client_id": "pay2-mobile-app-client", "request_uri": par["payload"]["requestUri"]}
+            )
+            self.webview_session.get(
+                "https://www.paypay.ne.jp/portal/oauth2/sign-in",
+                headers=headers_web,
+                params={"client_id": "pay2-mobile-app-client", "mode": "landing"}
+            )
+
+            # username/passwordでログイン
+            signin_payload = {"username": phone, "password": password, "signInAttemptCount": 1}
+            signin_resp = self.webview_session.post(
+                "https://www.paypay.ne.jp/portal/api/v2/oauth2/sign-in/password",
+                headers=headers_web, json=signin_payload
+            ).json()
+            if signin_resp["header"]["resultCode"] != "S0000":
+                raise PayPayLoginError(signin_resp)
+
+            # 2FAが必要な場合のフロー
+            if "redirectUrl" in signin_resp["payload"]:
+                uri = signin_resp["payload"]["redirectUrl"].replace("paypay://oauth2/callback?", "").split("&")
+                confirm_data = {
+                    "clientId": "pay2-mobile-app-client",
+                    "redirectUri": "paypay://oauth2/callback",
+                    "code": uri[0].replace("code=", ""),
+                    "codeVerifier": self.code_verifier
                 }
-                get_token=self.session.post("https://app4.paypay.ne.jp/bff/v2/oauth2/token",headers=headers,data=confirm_data,params=self.params,proxies=self.proxy).json()
-                if get_token["header"]["resultCode"] != "S0000":
-                    raise PayPayLoginError(get_token)
-                
-                self.access_token=get_token["payload"]["accessToken"]
-                self.refresh_token=get_token["payload"]["refreshToken"]
-                self.headers["Authorization"]=f"Bearer {self.access_token}"
-                self.headers["content-type"]="application/json"
-                self.headers=update_header_device_state(self.headers)
+                token_resp = self.session.post(
+                    "https://app4.paypay.ne.jp/bff/v2/oauth2/token",
+                    headers=self.headers, data=confirm_data, params=self.params, proxies=self.proxy
+                ).json()
+                if token_resp["header"]["resultCode"] != "S0000":
+                    raise PayPayLoginError(token_resp)
 
+                self.access_token = token_resp["payload"]["accessToken"]
+                self.refresh_token = token_resp["payload"]["refreshToken"]
+                self.headers["Authorization"] = f"Bearer {self.access_token}"
             else:
-                code_update=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json={}).json()
-                if code_update["header"]["resultCode"] != "S0000":
-                    raise PayPayLoginError(code_update)
-                
-                headers["Referer"]="https://www.paypay.ne.jp/portal/oauth2/verification-method?client_id=pay2-mobile-app-client&mode=navigation-2fa"
-                payload={
-                    "params":{
-                        "extension_id":"user-main-2fa-v1",
-                        "data":{
-                            "type":"SELECT_FLOW",
-                            "payload":{
-                                "flow":"OTL",
-                                "sign_in_method":"MOBILE",
-                                "base_url":"https://www.paypay.ne.jp/portal/oauth2/l"
-                                }
-                            }
-                        }
-                    }
-                
-                nav_2fa=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json=payload).json()
-                if nav_2fa["header"]["resultCode"] != "S0000":
-                    raise PayPayLoginError(nav_2fa)
-                
-                headers["Referer"]="https://www.paypay.ne.jp/portal/oauth2/otl-request?client_id=pay2-mobile-app-client&mode=navigation-2fa"
-                otl_request=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/side-channel/next-action-polling",headers=headers,json={"waitUntil": "PT5S"}).json()
-                if otl_request["header"]["resultCode"] != "S0000":
-                    raise PayPayLoginError(otl_request)
+                raise PayPayLoginError("2FAフローに進めませんでした")
 
-    def login(self,url:str):
+    # login_startに相当する関数
+    def login(self, url: str):
         if "https://" in url:
-            url=url.replace("https://www.paypay.ne.jp/portal/oauth2/l?id=","")
+            url = url.replace("https://www.paypay.ne.jp/portal/oauth2/l?id=", "")
 
-        #sentry_ids = generate_sentry()
         headers = {
             "Accept": "application/json, text/plain, */*",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Accept-Language": "ja-JP,ja;q=0.9",
-            #"baggage": f"sentry-environment=Production,sentry-release=4.75.0,sentry-public_key=a5e3ae80a20e15b8de50274dd231ab83,sentry-trace_id={sentry_ids.trace_id},sentry-sample_rate=0.0005,sentry-transaction=OTL,sentry-sampled=false",
-            "Cache-Control": "no-cache",
             "Client-Id": "pay2-mobile-app-client",
-            "Client-OS-Type": "ANDROID",
-            "Client-OS-Version": "29.0.0",
             "Client-Type": "PAYPAYAPP",
             "Client-Version": self.version,
-            "Connection": "keep-alive",
-            "Content-Type": "application/json",
-            "Host": "www.paypay.ne.jp",
-            "Origin": "https://www.paypay.ne.jp",
-            "Pragma": "no-cache",
-            "Referer": f"https://www.paypay.ne.jp/portal/oauth2/l?id={url}&client_id=pay2-mobile-app-client",
-            "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132")',
-            "sec-ch-ua-mobile": "?1",
-            "sec-ch-ua-platform": '"Android"',
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            #"sentry-trace": sentry_ids.sentry_trace_0,
-            "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
+            "Client-OS-Type": "ANDROID",
+            "Client-OS-Version": "29.0.0",
+            "User-Agent": f"Mozilla/5.0 (Linux; Android 10) wv Chrome/132.0.0.0 Mobile Safari/537.36",
             "X-Requested-With": "jp.ne.paypay.android.app"
         }
-        confirm_url=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/sign-in/2fa/otl/verify",headers=headers,json={"code":url}).json()
+
+        # 2FA確認
+        confirm_url = self.webview_session.post(
+            "https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/sign-in/2fa/otl/verify",
+            headers=headers, json={"code": url}
+        ).json()
         if confirm_url["header"]["resultCode"] != "S0000":
             raise PayPayLoginError(confirm_url)
-        
-        payload={
-            "params":{
-            "extension_id":"user-main-2fa-v1",
-            "data":{
-                "type":"COMPLETE_OTL",
-                "payload":None
-                }
-            }
-        }
-        get_uri=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json=payload).json()
+
+        # COMPLETE_OTL
+        payload = {"params": {"extension_id": "user-main-2fa-v1", "data": {"type": "COMPLETE_OTL", "payload": None}}}
+        get_uri = self.webview_session.post(
+            "https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",
+            headers=headers, json=payload
+        ).json()
         if get_uri["header"]["resultCode"] != "S0000":
             raise PayPayLoginError(get_uri)
-        
+
         try:
-            uri=get_uri["payload"]["redirect_uri"].replace("paypay://oauth2/callback?","").split("&")
+            uri = get_uri["payload"]["redirect_uri"].replace("paypay://oauth2/callback?", "").split("&")
         except:
-            raise PayPayLoginError('redirect_uriが見つかりませんでした\n'+str(get_uri))
+            raise PayPayLoginError('redirect_uriが見つかりませんでした\n' + str(get_uri))
 
-        headers = self.headers
-        del headers["Device-Lock-Type"]
-        del headers["Device-Lock-App-Setting"]
-        #del headers["baggage"]
-        #del headers["sentry-trace"]
-
-        confirm_data={
-            "clientId":"pay2-mobile-app-client",
-            "redirectUri":"paypay://oauth2/callback",
-            "code":uri[0].replace("code=",""),
-            "codeVerifier":self.code_verifier
+        # token取得
+        confirm_data = {
+            "clientId": "pay2-mobile-app-client",
+            "redirectUri": "paypay://oauth2/callback",
+            "code": uri[0].replace("code=", ""),
+            "codeVerifier": self.code_verifier
         }
-        get_token=self.session.post("https://app4.paypay.ne.jp/bff/v2/oauth2/token",headers=headers,data=confirm_data,params=self.params,proxies=self.proxy).json()
-        if get_token["header"]["resultCode"] != "S0000":
-            raise PayPayLoginError(get_token)
-        
-        self.access_token=get_token["payload"]["accessToken"] #90日もつよ
-        self.refresh_token=get_token["payload"]["refreshToken"]
-        self.headers["Authorization"]=f"Bearer {self.access_token}"
-        self.headers["content-type"]="application/json"
-        self.headers=update_header_device_state(self.headers)
-        
-        return get_token
+        token_resp = self.session.post(
+            "https://app4.paypay.ne.jp/bff/v2/oauth2/token",
+            headers=self.headers, data=confirm_data, params=self.params, proxies=self.proxy
+        ).json()
+        if token_resp["header"]["resultCode"] != "S0000":
+            raise PayPayLoginError(token_resp)
+
+        self.access_token = token_resp["payload"]["accessToken"]
+        self.refresh_token = token_resp["payload"]["refreshToken"]
+        self.headers["Authorization"] = f"Bearer {self.access_token}"
+
+        return token_resp
     
     def token_refresh(self,refresh_token:str) -> dict:
         if not self.access_token:
@@ -1139,6 +980,7 @@ class PayPay():
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
 
 
