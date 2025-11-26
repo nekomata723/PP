@@ -355,7 +355,7 @@ class PayPay():
                     "code":uri[0].replace("code=",""),
                     "codeVerifier":self.code_verifier
                 }
-                get_token=self.webview_session.post("https://app4.paypay.ne.jp/bff/v2/oauth2/token",headers=headers,data=confirm_data,params=self.params,proxies=self.proxy).json()
+                get_token=self.session.post("https://app4.paypay.ne.jp/bff/v2/oauth2/token",headers=headers,data=confirm_data,params=self.params,proxies=self.proxy).json()
                 if get_token["header"]["resultCode"] != "S0000":
                     raise PayPayLoginError(get_token)
                 
@@ -1139,6 +1139,7 @@ class PayPay():
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
 
 
