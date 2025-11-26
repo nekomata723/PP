@@ -165,11 +165,13 @@ class PayPay:
             "Accept-Encoding": "gzip",
             "Client-Mode": "NORMAL",
             "Client-OS-Release-Version": "10",
-            "Client-Type": "PAYPAYAPP",
-            "Client-Version": self.version,
-            "Client-UUID": self.client_uuid,
             "Client-OS-Type": "ANDROID",
             "Client-OS-Version": "29.0.0",
+            "Client-Type": "PAYPAYAPP",
+            "Client-UUID": self.client_uuid,
+            "Client-Version": self.version,
+            "Connection": "Keep-Alive",
+            "Content-Type": "application/x-www-form-urlencoded",
             "Device-Acceleration": device_state.device_acceleration,
             "Device-Acceleration-2": device_state.device_acceleration_2,
             "Device-Brand-Name": "KDDI",
@@ -184,14 +186,12 @@ class PayPay:
             "Device-Rotation": device_state.device_rotation,
             "Device-Rotation-2": device_state.device_rotation_2,
             "Device-UUID": self.device_uuid,
-            "Content-Type": "application/x-www-form-urlencoded",
             "Host": "app4.paypay.ne.jp",
             "Is-Emulator": "false",
             "Network-Status": "WIFI",
             "System-Locale": "ja",
             "Timezone": "Asia/Tokyo",
-            "User-Agent": f"PaypayApp/{self.version} Android10",
-            "Connection": "Keep-Alive"
+            "User-Agent": f"PaypayApp/{self.version} Android10"
         }
 
         self.params = {"payPayLang": "ja"}
@@ -1034,6 +1034,7 @@ class PayPay:
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
 
 
