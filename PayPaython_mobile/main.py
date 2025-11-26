@@ -264,12 +264,12 @@ class PayPay():
                 "client_id": "pay2-mobile-app-client",
                 "request_uri": par["payload"]["requestUri"]
             }
-            self.webview_session.get(f"https://www.paypay.ne.jp/portal/api/v2/oauth2/authorize",headers=headers,params=params,proxies=self.proxy)
+            self.webview_session.get(f"https://www.paypay.ne.jp/portal/api/v2/oauth2/authorize",headers=headers,params=params)
             params = {
                 "client_id": "pay2-mobile-app-client",
                 "mode": "landing"
             }
-            self.webview_session.get("https://www.paypay.ne.jp/portal/oauth2/sign-in",headers=headers,params=params,proxies=self.proxy)
+            self.webview_session.get("https://www.paypay.ne.jp/portal/oauth2/sign-in",headers=headers,params=params)
             
             #sentry_ids = generate_sentry()
             headers = {
@@ -331,7 +331,7 @@ class PayPay():
                 "password":password,
                 "signInAttemptCount":1
             }
-            signin=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/sign-in/password",headers=headers,json=payload,proxies=self.proxy).json()
+            signin=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/sign-in/password",headers=headers,json=payload).json()
             if signin["header"]["resultCode"] != "S0000":
                 raise PayPayLoginError(signin)
             
@@ -366,7 +366,7 @@ class PayPay():
                 self.headers=update_header_device_state(self.headers)
 
             else:
-                code_update=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json={},proxies=self.proxy).json()
+                code_update=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json={}).json()
                 if code_update["header"]["resultCode"] != "S0000":
                     raise PayPayLoginError(code_update)
                 
@@ -385,12 +385,12 @@ class PayPay():
                         }
                     }
                 
-                nav_2fa=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json=payload,proxies=self.proxy).json()
+                nav_2fa=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json=payload).json()
                 if nav_2fa["header"]["resultCode"] != "S0000":
                     raise PayPayLoginError(nav_2fa)
                 
                 headers["Referer"]="https://www.paypay.ne.jp/portal/oauth2/otl-request?client_id=pay2-mobile-app-client&mode=navigation-2fa"
-                otl_request=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/side-channel/next-action-polling",headers=headers,json={"waitUntil": "PT5S"},proxies=self.proxy).json()
+                otl_request=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/side-channel/next-action-polling",headers=headers,json={"waitUntil": "PT5S"}).json()
                 if otl_request["header"]["resultCode"] != "S0000":
                     raise PayPayLoginError(otl_request)
 
@@ -426,7 +426,7 @@ class PayPay():
             "User-Agent": f"Mozilla/5.0 (Linux; Android 10; SCV38 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/132.0.6834.163 Mobile Safari/537.36 jp.pay2.app.android/{self.version}",
             "X-Requested-With": "jp.ne.paypay.android.app"
         }
-        confirm_url=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/sign-in/2fa/otl/verify",headers=headers,json={"code":url},proxies=self.proxy).json()
+        confirm_url=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/sign-in/2fa/otl/verify",headers=headers,json={"code":url}).json()
         if confirm_url["header"]["resultCode"] != "S0000":
             raise PayPayLoginError(confirm_url)
         
@@ -439,7 +439,7 @@ class PayPay():
                 }
             }
         }
-        get_uri=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json=payload,proxies=self.proxy).json()
+        get_uri=self.webview_session.post("https://www.paypay.ne.jp/portal/api/v2/oauth2/extension/code-grant/update",headers=headers,json=payload).json()
         if get_uri["header"]["resultCode"] != "S0000":
             raise PayPayLoginError(get_uri)
         
@@ -1139,5 +1139,6 @@ class PayPay():
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
 
