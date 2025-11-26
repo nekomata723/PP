@@ -160,13 +160,35 @@ class PayPay:
         self.version = "5.11.1"
         self.headers = {
             "Accept": "*/*",
+            "Accept-Charset": "UTF-8",
+            "Accept-Encoding": "gzip",
+            "Client-Mode": "NORMAL",
+            "Client-OS-Release-Version": "10",
             "Client-Type": "PAYPAYAPP",
             "Client-Version": self.version,
             "Client-UUID": self.client_uuid,
             "Client-OS-Type": "ANDROID",
             "Client-OS-Version": "29.0.0",
+            "Device-Acceleration": device_state.device_acceleration,
+            "Device-Acceleration-2": device_state.device_acceleration_2,
+            "Device-Brand-Name": "KDDI",
+            "Device-Hardware-Name": "qcom",
+            "Device-In-Call": "false",
+            "Device-Lock-App-Setting": "false",
+            "Device-Lock-Type": "NONE",
+            "Device-Manufacturer-Name": "samsung",
+            "Device-Name": "SCV38",
+            "Device-Orientation": device_state.device_orientation,
+            "Device-Orientation-2": device_state.device_orientation_2,
+            "Device-Rotation": device_state.device_rotation,
+            "Device-Rotation-2": device_state.device_rotation_2,
             "Device-UUID": self.device_uuid,
             "Content-Type": "application/x-www-form-urlencoded",
+            "Host": "app4.paypay.ne.jp",
+            "Is-Emulator": "false",
+            "Network-Status": "WIFI",
+            "System-Locale": "ja",
+            "Timezone": "Asia/Tokyo",
             "User-Agent": f"PaypayApp/{self.version} Android10",
             "Connection": "Keep-Alive"
         }
@@ -195,7 +217,9 @@ class PayPay:
                 "codeChallenge": self.code_challenge,
                 "codeChallengeMethod": "S256",
                 "scope": "REGULAR",
-                "tokenVersion": "v2"
+                "tokenVersion": "v2",
+                "prompt": "",
+                "uiLocales": "ja"
             }
             try:
                 par_resp = self.session.post("https://app4.paypay.ne.jp/bff/v2/oauth2/par?payPayLang=ja",
@@ -210,6 +234,21 @@ class PayPay:
             # sign-inページ取得
             headers_web = {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br, zstd",
+                "Accept-Language": "ja-JP,ja;q=0.9",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Host": "www.paypay.ne.jp",
+                "is-emulator": "false",
+                "Pragma": "no-cache",
+                "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132"',
+                "sec-ch-ua-mobile": "?1",
+                "sec-ch-ua-platform": '"Android"',
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
                 "User-Agent": f"Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) wv Chrome/132.0.0.0 Mobile Safari/537.36",
                 "X-Requested-With": "jp.ne.paypay.android.app"
             }
@@ -262,11 +301,25 @@ class PayPay:
 
         headers = {
             "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "ja-JP,ja;q=0.9",
             "Client-Id": "pay2-mobile-app-client",
             "Client-Type": "PAYPAYAPP",
             "Client-Version": self.version,
             "Client-OS-Type": "ANDROID",
             "Client-OS-Version": "29.0.0",
+            "Connection": "keep-alive",
+            "Content-Type": "application/json",
+            "Host": "www.paypay.ne.jp",
+            "Origin": "https://www.paypay.ne.jp",
+            "Pragma": "no-cache",
+            "Referer": f"https://www.paypay.ne.jp/portal/oauth2/l?id={accept_url}&client_id=pay2-mobile-app-client",
+            "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132", "Android WebView";v="132")',
+            "sec-ch-ua-mobile": "?1",
+            "sec-ch-ua-platform": '"Android"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
             "User-Agent": f"Mozilla/5.0 (Linux; Android 10) wv Chrome/132.0.0.0 Mobile Safari/537.36",
             "X-Requested-With": "jp.ne.paypay.android.app"
         }
@@ -980,6 +1033,7 @@ class PayPay:
         self.session.post("https://app4.paypay.ne.jp/bff/v3/getHomeDisplayInfo?payPayLang=ja",headers=self.headers,json={"excludeMissionBannerInfoFlag": False,"includeBeginnerFlag": False,"includeSkinInfoFlag": False,"networkStatus": "WIFI"},proxies=self.proxy)
 
         self.session.get("https://app4.paypay.ne.jp/bff/v1/getSearchBar?payPayLang=ja",headers=self.headers,proxies=self.proxy)
+
 
 
 
